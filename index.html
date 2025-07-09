@@ -1,116 +1,169 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Request to Release Exam Results</title>
+  <meta charset="utf-8" />
+  <title>Signature Collection Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 30px auto;
+      font-family: 'Roboto', sans-serif;
+      background: #f4f7f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
     }
-    label {
-      display: block;
-      margin: 10px 0 5px;
-    }
-    input {
+
+    form {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
+      max-width: 500px;
     }
-    canvas {
-      border: 1px solid #000;
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 28px;
+      color: #333;
+    }
+
+    label {
+      margin-top: 15px;
+      font-weight: bold;
       display: block;
-      margin-bottom: 10px;
+      color: #444;
     }
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
+
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
       margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #signaturePreview {
+      display: none;
+      margin-top: 15px;
+      max-height: 100px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <h2>Request to Release Exam Results</h2>
-  <form id="signature-form">
-    <label for="name">Name:</label>
-    <input type="text" id="name" required />
+  <form id="googleForm">
+    <h2>Early Result Request Form</h2>
 
-    <label for="hallticket">Hall Ticket Number:</label>
-    <input type="text" id="hallticket" required />
+    <label for="name">Enter your name:</label>
+    <input id="name" name="entry.2055143733" placeholder="Your Name" type="text" required />
 
-    <label>Signature:</label>
-    <canvas id="canvas" width="400" height="200"></canvas><br/>
-    <button type="button" onclick="clearCanvas()">Clear Signature</button><br/><br/>
+    <label for="hallticket">Enter your Hall Ticket Number:</label>
+    <input id="hallticket" name="entry.208233491" placeholder="Hall Ticket Number" type="text" required />
 
-    <button type="submit">Submit</button>
+    <label for="signatureUpload">Or upload your signature image:</label>
+    <input type="file" id="signatureUpload" accept="image/*" />
+
+    <img id="signaturePreview" src="" alt="Signature Preview" />
+
+    <button type="submit" id="submitBtn">Submit</button>
   </form>
 
   <script>
-    // Setup signature pad
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
+    const signatureUpload = document.getElementById("signatureUpload");
+    const signaturePreview = document.getElementById("signaturePreview");
+    const submitBtn = document.getElementById("submitBtn");
+    let uploadedSignatureData = null;
 
-    canvas.addEventListener('mousedown', (e) => {
-      drawing = true;
-      draw(e);
+    signatureUpload.addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          uploadedSignatureData = e.target.result;
+          signaturePreview.src = uploadedSignatureData;
+          signaturePreview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
     });
-    canvas.addEventListener('mouseup', () => {
-      drawing = false;
-      ctx.beginPath();
-    });
-    canvas.addEventListener('mousemove', draw);
 
-    function draw(e) {
-      if (!drawing) return;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#000';
-
-      const rect = canvas.getBoundingClientRect();
-      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    }
-
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-    }
-
-    // Submit handler
-    document.getElementById('signature-form').addEventListener('submit', function(e) {
+    document.getElementById("googleForm").addEventListener("submit", function (e) {
       e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const hallticket = document.getElementById('hallticket').value.trim();
-      const signatureData = canvas.toDataURL();
-
-      if (!name || !hallticket) {
-        alert('Please fill in all fields.');
+      if (!uploadedSignatureData) {
+        alert("Please upload a signature image before submitting.");
         return;
       }
 
-      fetch('https://script.google.com/macros/s/AKfycbwLa6ni0-yuInqCnlx4UAEk5UdJ290MJ5FvJ6KrKnL2dvZq7vF537ISQrEAacppHGZK/exec', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: name,
-          hallticket: hallticket,
-          signature: signatureData
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => response.text())
-      .then(data => {
-        alert('Form submitted successfully!');
-        document.getElementById('signature-form').reset();
-        clearCanvas();
-      })
-      .catch(error => {
-        alert('Error submitting form: ' + error);
+      const name = document.getElementById("name").value;
+      const hallticket = document.getElementById("hallticket").value;
+
+      const scriptURL = "https://script.google.com/macros/s/AKfycbwGR1k48MG20J-rncKysQolUVPsADmSShwZif_TQPkdEZNDMkIG0AHBsbY4TYbBUTmFHA/exec";
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("hallticket", hallticket);
+      formData.append("signature", uploadedSignatureData);
+
+      // Replace button content with spinner and text
+      submitBtn.innerHTML = '<span class="spinner"></span>Submitting, please wait...';
+      submitBtn.disabled = true;
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      }).then(() => {
+        alert("Submitted successfully!");
+        document.getElementById("googleForm").reset();
+        signaturePreview.src = "";
+        signaturePreview.style.display = "none";
+        uploadedSignatureData = null;
+        submitBtn.innerHTML = 'Submit';
+        submitBtn.disabled = false;
+      }).catch(() => {
+        alert("Submission failed. Please try again.");
+        submitBtn.innerHTML = 'Submit';
+        submitBtn.disabled = false;
       });
     });
   </script>
